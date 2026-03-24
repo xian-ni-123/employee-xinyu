@@ -3,60 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>员工心语 - 匿名建议平台</title>
+    <title>员工心语 - 管理后台</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif}
-        body{background-color:#f2f5f9;padding:20px 15px}
-        .container{max-width:600px;margin:0 auto}
-        .card{background:#fff;border-radius:8px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-bottom:20px;border-top:4px solid #0c4da2}
-        .title{text-align:center;font-size:26px;color:#0c4da2;margin-bottom:8px;font-weight:bold;letter-spacing:1px}
-        .subtitle{text-align:center;color:#555;font-size:14px;margin-bottom:32px;line-height:1.6}
-        .form-item{margin-bottom:24px}
-        label{display:block;font-size:15px;color:#333;margin-bottom:12px;font-weight:500}
-        .category-group{display:flex;flex-wrap:wrap;gap:10px}
-        .category-item{flex:1;min-width:80px;padding:12px 8px;border:1px solid #ccc;border-radius:6px;text-align:center;cursor:pointer;font-size:14px;color:#333;transition:all 0.2s}
-        .category-item.active{background-color:#0c4da2;color:#fff;border-color:#0c4da2}
-        textarea{width:100%;height:150px;padding:16px;border:1px solid #ccc;border-radius:6px;font-size:15px;resize:none;outline:none}
-        textarea:focus{border-color:#0c4da2}
-        .submit-btn{width:100%;height:52px;background-color:#c9171e;color:#fff;border:none;border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;transition:0.2s}
-        .submit-btn:disabled{background-color:#999;cursor:not-allowed}
-        .success-tip{text-align:center;color:#c9171e;font-size:17px;font-weight:bold;padding:30px 0}
+        body{background:#f2f5f9;padding:20px 15px}
+        .container{max-width:1000px;margin:0 auto}
+        .header{background:#fff;border-radius:8px;border-top:4px solid #0c4da2;padding:24px;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,0.05);text-align:center}
+        .header h1{font-size:24px;color:#0c4da2;margin-bottom:6px}
+        .header p{font-size:14px;color:#555}
+        .tool-bar{background:#fff;padding:16px 20px;border-radius:8px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+        .export-btn{padding:10px 20px;background:#c9171e;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer}
+        .export-btn:disabled{background:#999}
+        .count{color:#0c4da2;font-weight:bold}
+        .table-box{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+        table{width:100%;border-collapse:collapse}
+        th{background:#0c4da2;color:#fff;padding:14px 12px;text-align:left;font-size:14px}
+        td{padding:14px 12px;border-bottom:1px solid #eee;font-size:14px;color:#333}
+        .empty{text-align:center;padding:40px 0;color:#999}
+        .tag{display:inline-block;padding:4px 8px;border-radius:4px;font-size:12px;background:#e6f0ff;color:#0c4da2}
     </style>
 </head>
 <body>
     <div id="app" class="container">
-        <div class="card">
-            <div class="title">员工心语</div>
-            <div class="subtitle">新乡航空工业（集团）有限公司产品研发院<br>技术研究与工程能力所 | 匿名建议平台</div>
-            <div v-if="submitSuccess" class="success-tip">✅ 提交成功，感谢您的建议！</div>
-            <div v-else>
-                <div class="form-item">
-                    <label>请选择建议分类</label>
-                    <div class="category-group">
-                        <div class="category-item" :class="{active: category == '党建'}" @click="category = '党建'">党建</div>
-                        <div class="category-item" :class="{active: category == '工会'}" @click="category = '工会'">工会</div>
-                        <div class="category-item" :class="{active: category == '团建'}" @click="category = '团建'">团建</div>
-                        <div class="category-item" :class="{active: category == '组织建设'}" @click="category = '组织建设'">组织建设</div>
-                    </div>
-                </div>
-                <div class="form-item">
-                    <label>请输入您的建议（匿名提交）</label>
-                    <textarea v-model="content" placeholder="请写下您的想法、建议或意见，我们将认真倾听..."></textarea>
-                </div>
-                <button class="submit-btn" :disabled="!canSubmit" @click="submitForm">提交建议</button>
-            </div>
+        <div class="header">
+            <h1>员工心语建议管理后台</h1>
+            <p>新乡航空工业（集团）有限公司产品研发院 | 技术研究与工程能力所</p>
+        </div>
+        <div class="tool-bar">
+            <div>总建议数：<span class="count">{{ list.length }}</span> 条</div>
+            <button class="export-btn" @click="exportExcel" :disabled="!list.length">导出 Excel 表格</button>
+        </div>
+        <div class="table-box">
+            <table>
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>提交时间</th>
+                        <th>建议分类</th>
+                        <th>建议内容</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-if="!list.length">
+                        <td colspan="4" class="empty">暂无建议数据</td>
+                    </tr>
+                    <tr v-for="(item, index) in list" :key="index">
+                        <td>{{ index + 1 }}</td>
+                        <td>{{ item.time }}</td>
+                        <td><span class="tag">{{ item.type }}</span></td>
+                        <td>{{ item.content }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
     <script>
         const { createApp } = Vue
         createApp({
-            data(){return{category:'',content:'',submitSuccess:false}},
-            computed:{canSubmit(){return this.category && this.content.trim().length>0}},
+            data(){
+                return{
+                    list:[
+                        {time:"2026-03-24 09:25",type:"党建",content:"希望多组织红色教育学习活动"},
+                        {time:"2026-03-24 10:10",type:"工会",content:"建议增加员工文体活动"},
+                        {time:"2026-03-24 11:30",type:"组织建设",content:"希望优化内部沟通流程"}
+                    ]
+                }
+            },
             methods:{
-                submitForm(){
-                    this.submitSuccess=true
-                    setTimeout(()=>{this.category='';this.content=''},1200)
+                exportExcel(){
+                    const data=[["序号","提交时间","建议分类","建议内容"],...this.list.map((item,index)=>[index+1,item.time,item.type,item.content])]
+                    const ws=XLSX.utils.aoa_to_sheet(data)
+                    const wb=XLSX.utils.book_new()
+                    XLSX.utils.book_append_sheet(wb,ws,"员工心语建议")
+                    XLSX.writeFile(wb,"员工心语建议表.xlsx")
                 }
             }
         }).mount('#app')
