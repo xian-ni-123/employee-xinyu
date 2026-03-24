@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>员工心语 - 管理后台</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif}
+        body{background:#f2f5f9;padding:20px 15px}
+        .container{max-width:1000px;margin:0 auto}
+        .header{background:#fff;border-radius:8px;border-top:4px solid #0c4da2;padding:24px;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,0.05);text-align:center}
+        .header h1{font-size:24px;color:#0c4da2;margin-bottom:6px}
+        .header p{font-size:14px;color:#555}
+        .tool-bar{background:#fff;padding:16px 20px;border-radius:8px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+        .export-btn{padding:10px 20px;background:#c9171e;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer}
+        .export-btn:disabled{background:#999}
+        .count{color:#0c4da2;font-weight:bold}
+        .table-box{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+        table{width:100%;border-collapse:collapse}
+        th{background:#0c4da2;color:#fff;padding:14px 12px;text-align:left;font-size:14px}
+        td{padding:14px 12px;border-bottom:1px solid #eee;font-size:14px;color:#333}
+        .empty{text-align:center;padding:40px 0;color:#999}
+        .tag{display:inline-block;padding:4px 8px;border-radius:4px;font-size:12px;background:#e6f0ff;color:#0c4da2}
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <div class="header">
+            <h1>员工心语建议管理后台</h1>
+            <p>新乡航空工业（集团）有限公司产品研发院 | 技术研究与工程能力所</p>
+        </div>
+        <div class="tool-bar">
+            <div>总建议数：<span class="count">{{ list.length }}</span> 条</div>
+            <button class="export-btn" @click="exportExcel" :disabled="!list.length">导出 Excel 表格</button>
+        </div>
+        <div class="table-box">
+            <table>
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>提交时间</th>
+                        <th>建议分类</th>
+                        <th>建议内容</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-if="!list.length">
+                        <td colspan="4" class="empty">暂无建议数据</td>
+                    </tr>
+                    <tr v-for="(item, index) in list" :key="index">
+                        <td>{{ index + 1 }}</td>
+                        <td>{{ item.time }}</td>
+                        <td><span class="tag">{{ item.type }}</span></td>
+                        <td>{{ item.content }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        const { createApp } = Vue
+        createApp({
+            data(){
+                return{
+                    list:[
+                        {time:"2026-03-24 09:25",type:"党建",content:"希望多组织红色教育学习活动"},
+                        {time:"2026-03-24 10:10",type:"工会",content:"建议增加员工文体活动"},
+                        {time:"2026-03-24 11:30",type:"组织建设",content:"希望优化内部沟通流程"}
+                    ]
+                }
+            },
+            methods:{
+                exportExcel(){
+                    const data=[["序号","提交时间","建议分类","建议内容"],...this.list.map((item,index)=>[index+1,item.time,item.type,item.content])]
+                    const ws=XLSX.utils.aoa_to_sheet(data)
+                    const wb=XLSX.utils.book_new()
+                    XLSX.utils.book_append_sheet(wb,ws,"员工心语建议")
+                    XLSX.writeFile(wb,"员工心语建议表.xlsx")
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
